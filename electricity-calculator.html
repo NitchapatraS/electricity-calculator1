@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#0f172a">
+<title>คำนวณค่าไฟฟ้า</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f172a;
+  --bg2:#1e293b;
+  --bg3:#263347;
+  --border:#334155;
+  --accent:#38bdf8;
+  --accent2:#0ea5e9;
+  --green:#34d399;
+  --amber:#fbbf24;
+  --red:#f87171;
+  --purple:#a78bfa;
+  --text:#f1f5f9;
+  --text2:#94a3b8;
+  --text3:#64748b;
+  --radius:14px;
+  --radius-sm:9px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Sarabun',sans-serif;font-size:16px;line-height:1.5}
+body{overflow-x:hidden}
+
+/* scrollbar */
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+.app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+
+/* HEADER */
+.header{padding:20px 18px 14px;background:var(--bg);position:sticky;top:0;z-index:10;border-bottom:1px solid var(--border)}
+.header-inner{display:flex;align-items:center;gap:12px}
+.logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#0ea5e9,#38bdf8);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.header-text h1{font-size:17px;font-weight:600;color:var(--text);letter-spacing:-.01em}
+.header-text p{font-size:12px;color:var(--text3);margin-top:1px}
+
+/* TABS */
+.tabs{display:flex;gap:6px;padding:12px 18px;background:var(--bg)}
+.tab{flex:1;padding:9px 8px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg2);color:var(--text2);font-size:13px;font-family:'Sarabun',sans-serif;font-weight:400;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px}
+.tab svg{width:15px;height:15px;flex-shrink:0}
+.tab.active{background:var(--accent2);border-color:var(--accent2);color:#fff;font-weight:500}
+
+/* CONTENT */
+.content{flex:1;padding:6px 18px 32px;overflow-y:auto}
+.section{display:none}
+.section.active{display:block}
+
+/* CARDS */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.card.blue::before{background:linear-gradient(90deg,#0ea5e9,#38bdf8)}
+.card.amber::before{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
+.card.green::before{background:linear-gradient(90deg,#10b981,#34d399)}
+.card-head{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.card-head svg{width:16px;height:16px;flex-shrink:0}
+.card-head.blue svg{stroke:var(--accent)}
+.card-head.amber svg{stroke:var(--amber)}
+.card-head.green svg{stroke:var(--green)}
+.card-head span{font-size:13px;font-weight:500;color:var(--text2)}
+
+/* FIELDS */
+.field{margin-bottom:10px}
+.field:last-child{margin-bottom:0}
+.field label{font-size:12px;color:var(--text3);display:block;margin-bottom:5px;font-weight:400}
+.field input{width:100%;height:44px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:16px;font-family:'Sarabun',sans-serif;padding:0 13px;outline:none;transition:all .15s;-webkit-appearance:none}
+.field input:focus{border-color:var(--accent2);box-shadow:0 0 0 3px rgba(14,165,233,.15)}
+.field input::placeholder{color:var(--text3)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* CALC BUTTON */
+.calc-btn{width:100%;height:50px;border:none;border-radius:var(--radius);background:linear-gradient(135deg,#0ea5e9,#0284c7);color:#fff;font-size:16px;font-family:'Sarabun',sans-serif;font-weight:600;cursor:pointer;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;letter-spacing:.01em}
+.calc-btn:active{transform:scale(.97);opacity:.9}
+.calc-btn svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* RESULTS */
+.results{margin-top:14px;animation:fadeUp .3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.avg-pill{display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:12px}
+.avg-pill-label{font-size:12px;color:var(--text3)}
+.avg-pill-val{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:500;color:var(--accent)}
+
+.section-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin:14px 0 8px}
+
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px}
+.metric{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px}
+.metric-label{font-size:11px;color:var(--text3);margin-bottom:4px}
+.metric-val{font-size:20px;font-weight:600;line-height:1.1}
+.metric-unit{font-size:11px;font-weight:400;color:var(--text3);margin-left:3px}
+.metric-val.blue{color:var(--accent)}
+.metric-val.green{color:var(--green)}
+.metric-val.amber{color:var(--amber)}
+
+/* CHECK */
+.check-row{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-radius:var(--radius-sm);border:1px solid;margin:12px 0 0}
+.check-row.ok{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.3)}
+.check-row.err{background:rgba(248,113,113,.08);border-color:rgba(248,113,113,.3)}
+.check-label{font-size:13px;color:var(--text2);display:flex;align-items:center;gap:6px}
+.check-label svg{width:15px;height:15px}
+.check-row.ok .check-label svg{stroke:var(--green)}
+.check-row.err .check-label svg{stroke:var(--red)}
+.check-val{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500}
+.check-val.ok{color:var(--green)}
+.check-val.err{color:var(--red)}
+
+/* SAVE BTN */
+.save-btn{width:100%;height:44px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg3);color:var(--text2);font-size:14px;font-family:'Sarabun',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;margin-top:10px;transition:all .2s}
+.save-btn:active{background:var(--bg2);color:var(--text)}
+.save-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* HISTORY */
+.hist-summary{background:linear-gradient(135deg,rgba(14,165,233,.15),rgba(56,189,248,.08));border:1px solid rgba(56,189,248,.25);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px}
+.hist-summary-title{font-size:12px;color:var(--accent);font-weight:500;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.hist-summary-title svg{width:14px;height:14px;stroke:var(--accent);fill:none;stroke-width:2}
+.sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sum-item-label{font-size:11px;color:var(--text3);margin-bottom:2px}
+.sum-item-val{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:500;color:var(--text)}
+
+.hist-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;position:relative}
+.hist-item-date{font-size:12px;color:var(--text3);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.hist-del{background:none;border:none;cursor:pointer;padding:4px;color:var(--text3);display:flex;align-items:center;transition:color .15s}
+.hist-del:active{color:var(--red)}
+.hist-del svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.hist-rows{}
+.hist-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--bg3);font-size:13px}
+.hist-row:last-child{border-bottom:none;padding-bottom:0}
+.hist-row-label{color:var(--text3)}
+.hist-row-val{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;color:var(--text)}
+.hist-row-val.blue{color:var(--accent)}
+.hist-row-val.green{color:var(--green)}
+.hist-row-val.amber{color:var(--amber)}
+
+.empty{text-align:center;padding:48px 24px;color:var(--text3)}
+.empty svg{width:40px;height:40px;stroke:var(--border);fill:none;stroke-width:1.5;display:block;margin:0 auto 12px}
+.empty p{font-size:14px}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(70px);background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px 20px;border-radius:50px;font-size:13px;opacity:0;transition:all .25s;pointer-events:none;white-space:nowrap;z-index:100;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+      <div class="header-text">
+        <h1>คำนวณค่าไฟฟ้า</h1>
+        <p>มิเตอร์หลัก + มิเตอร์ชั้น 2</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('calc')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>
+      คำนวณ
+    </button>
+    <button class="tab" onclick="switchTab('hist')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      ประวัติ
+    </button>
+  </div>
+
+  <div class="content">
+    <!-- TAB CALC -->
+    <div class="section active" id="sec-calc">
+      <div class="card blue">
+        <div class="card-head blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span>วันที่และใบแจ้งหนี้</span>
+        </div>
+        <div class="field">
+          <label>วันที่อ่านหน่วย</label>
+          <input type="date" id="inp-date">
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>ค่า FT (บาท/หน่วย)</label>
+            <input type="number" id="inp-ft" placeholder="0.0972" step="0.0001" inputmode="decimal">
+          </div>
+          <div class="field">
+            <label>ค่าไฟรวม (บาท)</label>
+            <input type="number" id="inp-total" placeholder="3236.90" inputmode="decimal">
+          </div>
+        </div>
+      </div>
+
+      <div class="card amber">
+        <div class="card-head amber">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+          <span>มิเตอร์หลัก (หน้าบ้าน)</span>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>เลขจดครั้งก่อน</label>
+            <input type="number" id="inp-m1prev" placeholder="81743" inputmode="numeric">
+          </div>
+          <div class="field">
+            <label>เลขจดครั้งนี้</label>
+            <input type="number" id="inp-m1curr" placeholder="82457" inputmode="numeric">
+          </div>
+        </div>
+      </div>
+
+      <div class="card green">
+        <div class="card-head green">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+          <span>มิเตอร์ชั้น 2 (ภายในบ้าน)</span>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>เลขจดครั้งก่อน</label>
+            <input type="number" id="inp-m2prev" placeholder="46" inputmode="numeric">
+          </div>
+          <div class="field">
+            <label>เลขจดครั้งนี้</label>
+            <input type="number" id="inp-m2curr" placeholder="120" inputmode="numeric">
+          </div>
+        </div>
+      </div>
+
+      <button class="calc-btn" onclick="calculate()">
+        <svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="11" y2="14"/><polyline points="16 14 14 16 16 18"/></svg>
+        คำนวณค่าไฟฟ้า
+      </button>
+
+      <div class="results" id="result-section" style="display:none">
+        <div class="avg-pill">
+          <span class="avg-pill-label">ราคาเฉลี่ยต่อหน่วย</span>
+          <span class="avg-pill-val" id="res-avgrate">— บาท/ยูนิต</span>
+        </div>
+
+        <div class="section-label">มิเตอร์หลัก (รวมทั้งบ้าน)</div>
+        <div class="metrics">
+          <div class="metric">
+            <div class="metric-label">หน่วยรวม</div>
+            <div class="metric-val blue" id="res-m1units">—<span class="metric-unit">ยูนิต</span></div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">ค่าไฟรวม</div>
+            <div class="metric-val blue" id="res-m1total">—<span class="metric-unit">บาท</span></div>
+          </div>
+        </div>
+
+        <div class="section-label">มิเตอร์ชั้น 2</div>
+        <div class="metrics">
+          <div class="metric">
+            <div class="metric-label">หน่วยชั้น 2</div>
+            <div class="metric-val green" id="res-m2units">—<span class="metric-unit">ยูนิต</span></div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">ค่าไฟชั้น 2</div>
+            <div class="metric-val green" id="res-m2cost">—<span class="metric-unit">บาท</span></div>
+          </div>
+        </div>
+
+        <div class="section-label">ชั้น 1 (ส่วนที่เหลือ)</div>
+        <div class="metrics">
+          <div class="metric">
+            <div class="metric-label">หน่วยชั้น 1</div>
+            <div class="metric-val amber" id="res-m1flunits">—<span class="metric-unit">ยูนิต</span></div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">ค่าไฟชั้น 1</div>
+            <div class="metric-val amber" id="res-m1flcost">—<span class="metric-unit">บาท</span></div>
+          </div>
+        </div>
+
+        <div class="check-row ok" id="res-check">
+          <span class="check-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            ผลตรวจสอบ
+          </span>
+          <span class="check-val ok" id="res-check-val">—</span>
+        </div>
+
+        <button class="save-btn" onclick="saveRecord()">
+          <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          บันทึกเดือนนี้
+        </button>
+      </div>
+    </div>
+
+    <!-- TAB HISTORY -->
+    <div class="section" id="sec-hist">
+      <div id="hist-container"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORE='elec_v2';
+function getR(){try{return JSON.parse(localStorage.getItem(STORE)||'[]')}catch(e){return[]}}
+function saveR(a){localStorage.setItem(STORE,JSON.stringify(a))}
+
+function fmt(n,d=2){return Number(n).toLocaleString('th-TH',{minimumFractionDigits:d,maximumFractionDigits:d})}
+function fmtDate(d){if(!d)return'ไม่ระบุ';const p=d.split('-');return`${p[2]}/${p[1]}/${p[0]}`}
+function gv(id){return parseFloat(document.getElementById(id).value)||0}
+function gs(id){return document.getElementById(id).value}
+
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',['calc','hist'][i]===t));
+  document.querySelectorAll('.section').forEach(el=>el.classList.remove('active'));
+  document.getElementById('sec-'+t).classList.add('active');
+  if(t==='hist')renderHist();
+}
+
+function toast(msg,dur=2200){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),dur);
+}
+
+let last=null;
+
+function calculate(){
+  const m1p=gv('inp-m1prev'),m1c=gv('inp-m1curr');
+  const m2p=gv('inp-m2prev'),m2c=gv('inp-m2curr');
+  const ft=gv('inp-ft'),total=gv('inp-total');
+  const date=gs('inp-date');
+
+  if(!m1c||!m1p||!total){toast('กรุณากรอก: เลขมิเตอร์หลัก และ ค่าไฟรวม');return}
+  if(m1c<m1p){toast('เลขจดครั้งนี้ต้องมากกว่าครั้งก่อน');return}
+
+  const m1u=m1c-m1p;
+  const m2u=(m2c&&m2p&&m2c>m2p)?m2c-m2p:0;
+  const avg=m1u>0?total/m1u:0;
+  const m2cost=Math.round(m2u*avg*100)/100;
+  const m1cost=Math.round((total-m2cost)*100)/100;
+  const m1fu=m1u-m2u;
+  const chk=Math.round((total-m1cost-m2cost)*100)/100;
+
+  document.getElementById('res-avgrate').textContent=fmt(avg,4)+' บาท/ยูนิต';
+  document.getElementById('res-m1units').innerHTML=fmt(m1u,0)+'<span class="metric-unit">ยูนิต</span>';
+  document.getElementById('res-m1total').innerHTML=fmt(total,2)+'<span class="metric-unit">บาท</span>';
+  document.getElementById('res-m2units').innerHTML=fmt(m2u,0)+'<span class="metric-unit">ยูนิต</span>';
+  document.getElementById('res-m2cost').innerHTML=fmt(m2cost,2)+'<span class="metric-unit">บาท</span>';
+  document.getElementById('res-m1flunits').innerHTML=fmt(m1fu,0)+'<span class="metric-unit">ยูนิต</span>';
+  document.getElementById('res-m1flcost').innerHTML=fmt(m1cost,2)+'<span class="metric-unit">บาท</span>';
+
+  const chkEl=document.getElementById('res-check');
+  const chkV=document.getElementById('res-check-val');
+  const ok=Math.abs(chk)<0.01;
+  chkEl.className='check-row '+(ok?'ok':'err');
+  chkV.className='check-val '+(ok?'ok':'err');
+  chkEl.querySelector('svg').innerHTML=ok
+    ?'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>'
+    :'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>';
+  chkV.textContent=ok?'ถูกต้อง (0.00)':'ผลต่าง '+fmt(chk,2)+' บาท';
+
+  document.getElementById('result-section').style.display='block';
+  document.getElementById('result-section').scrollIntoView({behavior:'smooth',block:'nearest'});
+  last={date,m1p,m1c,m2p,m2c,ft,total,m1u,m2u,avg,m2cost,m1cost,m1fu,chk};
+}
+
+function saveRecord(){
+  if(!last){toast('คำนวณก่อนนะครับ');return}
+  const recs=getR();
+  recs.unshift({...last,saved:new Date().toISOString()});
+  saveR(recs);
+  toast('✓ บันทึกแล้ว');
+}
+
+function deleteRecord(i){
+  const recs=getR();
+  recs.splice(i,1);
+  saveR(recs);
+  renderHist();
+  toast('ลบแล้ว');
+}
+
+function renderHist(){
+  const recs=getR();
+  const c=document.getElementById('hist-container');
+  if(!recs.length){
+    c.innerHTML=`<div class="empty">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <p>ยังไม่มีประวัติ<br>คำนวณและกดบันทึกเพื่อเก็บข้อมูล</p>
+    </div>`;
+    return;
+  }
+  let tt=0,tm1u=0,tm2u=0,tm2c=0,tm1c=0;
+  recs.forEach(r=>{tt+=r.total||0;tm1u+=r.m1u||0;tm2u+=r.m2u||0;tm2c+=r.m2cost||0;tm1c+=r.m1cost||0});
+
+  let html=`<div class="hist-summary">
+    <div class="hist-summary-title">
+      <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      รวมสะสม ${recs.length} เดือน
+    </div>
+    <div class="sum-grid">
+      <div><div class="sum-item-label">ค่าไฟรวม</div><div class="sum-item-val">${fmt(tt,2)} ฿</div></div>
+      <div><div class="sum-item-label">หน่วยรวม</div><div class="sum-item-val">${fmt(tm1u,0)} ยูนิต</div></div>
+      <div><div class="sum-item-label">ค่าไฟชั้น 2</div><div class="sum-item-val" style="color:var(--green)">${fmt(tm2c,2)} ฿</div></div>
+      <div><div class="sum-item-label">ค่าไฟชั้น 1</div><div class="sum-item-val" style="color:var(--amber)">${fmt(tm1c,2)} ฿</div></div>
+    </div>
+  </div>`;
+
+  recs.forEach((r,i)=>{
+    html+=`<div class="hist-item">
+      <div class="hist-item-date">
+        <span>📅 ${fmtDate(r.date)}</span>
+        <button class="hist-del" onclick="deleteRecord(${i})" aria-label="ลบ">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+        </button>
+      </div>
+      <div class="hist-rows">
+        <div class="hist-row"><span class="hist-row-label">ค่าไฟรวม</span><span class="hist-row-val blue">${fmt(r.total,2)} บาท</span></div>
+        <div class="hist-row"><span class="hist-row-label">หน่วยรวม (มิเตอร์หลัก)</span><span class="hist-row-val">${fmt(r.m1u,0)} ยูนิต</span></div>
+        <div class="hist-row"><span class="hist-row-label">ชั้น 2 — ${fmt(r.m2u,0)} ยูนิต</span><span class="hist-row-val green">${fmt(r.m2cost,2)} บาท</span></div>
+        <div class="hist-row"><span class="hist-row-label">ชั้น 1 — ${fmt(r.m1fu||r.m1u-r.m2u,0)} ยูนิต</span><span class="hist-row-val amber">${fmt(r.m1cost,2)} บาท</span></div>
+        <div class="hist-row"><span class="hist-row-label">ราคาเฉลี่ย/ยูนิต</span><span class="hist-row-val">${fmt(r.avg,4)} บาท</span></div>
+      </div>
+    </div>`;
+  });
+  c.innerHTML=html;
+}
+
+document.getElementById('inp-date').value=new Date().toISOString().split('T')[0];
+</script>
+</body>
+</html>
